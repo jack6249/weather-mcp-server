@@ -100,4 +100,4 @@ if __name__ == "__main__":
     # -----------------------------------------------------------
     # Smithery 和大多数 HTTP MCP 客户端需要 SSE (Server-Sent Events)
     # HelloAgents (通过 FastMCP) 会在 /sse 路径提供服务
-    weather_server.run(transport="sse", host=host, port=port)
+    weather_server.mcp.run(transport="sse", host=host, port=port)
