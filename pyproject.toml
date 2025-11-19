@@ -9,7 +9,7 @@ description = "Real-time weather query MCP server based on HelloAgents framework
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "HelloAgents Team", email = "jjyaoao@126.com"}
+    {name = "jack6249", email = "zhangshanqi123@163.com"}
 ]
 requires-python = ">=3.10"
 dependencies = [
