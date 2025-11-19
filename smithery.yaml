@@ -1,7 +1,7 @@
 name: weather-mcp-server
 displayName: Weather MCP Server
 description: Real-time weather query MCP server based on HelloAgents framework
-version: 1.0.4
+version: 1.0.5
 author: jack6249
 homepage: https://github.com/jack6249/weather-mcp-server
 license: MIT
