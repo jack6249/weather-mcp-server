@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""天气查询 MCP 服务器（Stdio 模式，简化版）"""
-
+"""天气查询 MCP 服务器（Stdio模式，双重保险版）"""
 import requests
 from datetime import datetime
 from typing import Dict, Any
@@ -15,18 +14,19 @@ logging.basicConfig(
     stream=sys.stderr
 )
 
-# 初始化FastMCP（Stdio模式默认启用，补充元数据）
+# 初始化FastMCP（同步pyproject.toml的依赖版本，避免不一致）
 app = FastMCP(
     name="weather-server",
     description="真实天气查询服务（Stdio模式）",
     dependencies={
-        "requests": ">=2.25.0",
-        "python": ">=3.8",
-        "fastmcp": ">=0.1.0"
+        "requests": ">=2.31.0",  # 与pyproject.toml的requests版本同步
+        "python": ">=3.10",      # 与requires-python版本同步
+        "fastmcp": ">=0.1.0",
+        "smithery": ">=0.3.1"    # 同步平台要求的smithery版本
     }
 )
 
-# 城市映射表
+# 城市映射表（保持不变）
 CITY_MAP = {
     "北京": "Beijing", "上海": "Shanghai", "广州": "Guangzhou",
     "深圳": "Shenzhen", "杭州": "Hangzhou", "成都": "Chengdu",
@@ -36,7 +36,7 @@ CITY_MAP = {
 
 
 def get_weather_data(city: str) -> Dict[str, Any]:
-    """获取天气原始数据（辅助函数）"""
+    """获取天气原始数据（辅助函数，逻辑不变）"""
     city_en = CITY_MAP.get(city, city)
     url = f"https://wttr.in/{city_en}?format=j1"
     headers = {"User-Agent": "Weather-MCP-Stdio/1.0"}
@@ -57,7 +57,7 @@ def get_weather_data(city: str) -> Dict[str, Any]:
     }
 
 
-# 注册工具（绑定到app实例）
+# 工具注册（保持不变，依赖smithery自动反射）
 @app.tool(name="get_weather", description="获取指定中文城市的当前天气")
 def get_weather(city: str) -> Dict[str, Any]:
     try:
@@ -79,15 +79,15 @@ def get_server_info() -> Dict[str, Any]:
     return {
         "name": app.name,
         "description": app.description,
-        "version": "1.0.0",
-        "mode": "stdio",  # 明确标注为Stdio模式
+        "version": "1.0.11",  # 与pyproject.toml版本同步
+        "mode": "stdio",
         "dependencies": app.dependencies
     }
 
 
 if __name__ == "__main__":
-    logging.info(f"🌤️  Starting Weather MCP Server (Stdio模式)")
-    logging.info(f"📡  通过标准输入输出通信，无需网络端口")
+    logging.info(f"🌤️  Starting Weather MCP Server (Stdio模式，双重保险)")
+    logging.info(f"📡  通过标准输入输出通信，已启用Python无缓冲模式")
     
-    # Stdio模式默认启用，直接运行（无需host/port/transport参数）
-    app.run()
+    # 关键修改：显式指定transport='stdio'，强制锁定模式，避免系统默认"猜测"
+    app.run(transport="stdio")
