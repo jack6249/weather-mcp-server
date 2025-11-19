@@ -7,6 +7,17 @@ import os
 from datetime import datetime
 from typing import Dict, Any
 from hello_agents.protocols import MCPServer
+import logging
+import sys
+
+# 显式配置日志输出到 Stderr (标准错误)
+# 这样可以保证日志会被记录，但不会干扰 Smithery 的 Stdout 扫描
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stderr 
+)
+
 
 # 创建 MCP 服务器
 weather_server = MCPServer(name="weather-server", description="真实天气查询服务")
@@ -23,7 +34,10 @@ def get_weather_data(city: str) -> Dict[str, Any]:
     """从 wttr.in 获取天气数据"""
     city_en = CITY_MAP.get(city, city)
     url = f"https://wttr.in/{city_en}?format=j1"
-    response = requests.get(url, timeout=10)
+    # 添加 User-Agent
+    headers = {"User-Agent": "Weather-MCP-Server/1.0"}
+    
+    response = requests.get(url, headers=headers, timeout=10)
     response.raise_for_status()
     data = response.json()
     current = data["current_condition"][0]
@@ -61,7 +75,8 @@ def get_server_info() -> str:
     info = {
         "name": "Weather MCP Server",
         "version": "1.0.0",
-        "tools": ["get_weather", "list_supported_cities", "get_server_info"]
+        "framework": "HelloAgents",
+        "status": "running"
     }
     return json.dumps(info, ensure_ascii=False, indent=2)
 
@@ -73,16 +88,16 @@ weather_server.add_tool(get_server_info)
 
 
 if __name__ == "__main__":
-    # Smithery requires HTTP transport on PORT environment variable
+    # 获取端口配置
     port = int(os.getenv("PORT", 8081))
-    host = os.getenv("HOST", "0.0.0.0")
+    host = "0.0.0.0"
 
-    print(f"🌤️  Starting Weather MCP Server...")
-    print(f"📡 Transport: HTTP")
-    print(f"🌐 Host: {host}")
-    print(f"🔌 Port: {port}")
-    print(f"🔗 Endpoint: http://{host}:{port}/mcp")
-    print(f"✨ Ready to serve weather data!")
-
-    # Run with HTTP transport (required by Smithery)
-    weather_server.run(transport="http", host=host, port=port)
+    logging.info(f"🌤️  Starting Weather MCP Server (HelloAgents)")
+    logging.info(f"🔌 Port: {port}")
+    
+    # -----------------------------------------------------------
+    # 关键修改：使用 transport="sse"
+    # -----------------------------------------------------------
+    # Smithery 和大多数 HTTP MCP 客户端需要 SSE (Server-Sent Events)
+    # HelloAgents (通过 FastMCP) 会在 /sse 路径提供服务
+    weather_server.run(transport="sse", host=host, port=port)
