@@ -1,3 +1,4 @@
 hello-agents>=0.2.2
 requests>=2.31.0
 uvicorn>=0.20.0
+fastmcp>=0.1.0
