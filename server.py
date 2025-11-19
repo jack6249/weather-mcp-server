@@ -1,33 +1,32 @@
 #!/usr/bin/env python3
-"""天气查询 MCP 服务器（基于 fastmcp 优化版）"""
+"""天气查询 MCP 服务器（Stdio 模式，简化版）"""
 
 import requests
-import os
 from datetime import datetime
 from typing import Dict, Any
 import logging
 import sys
-from fastmcp import FastMCP  # 导入 FastMCP 核心类
+from fastmcp import FastMCP
 
-# 配置日志输出到标准错误（不干扰 SSE 输出）
+# 配置日志（输出到标准错误，不干扰Stdio通信）
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    stream=sys.stderr 
+    stream=sys.stderr
 )
 
-# 创建 FastMCP 实例（补充 dependencies 元数据）
+# 初始化FastMCP（Stdio模式默认启用，补充元数据）
 app = FastMCP(
     name="weather-server",
-    description="真实天气查询服务，提供城市实时天气、支持城市列表及服务器信息查询",
-    # 补充依赖信息（元数据更完善，便于客户端识别服务器依赖）
+    description="真实天气查询服务（Stdio模式）",
     dependencies={
-        "requests": ">=2.25.0",  # 用于HTTP请求的库版本要求
-        "python": ">=3.8",       # 支持的Python版本
-        "fastmcp": ">=0.1.0"     # 依赖的fastmcp版本
+        "requests": ">=2.25.0",
+        "python": ">=3.8",
+        "fastmcp": ">=0.1.0"
     }
 )
 
+# 城市映射表
 CITY_MAP = {
     "北京": "Beijing", "上海": "Shanghai", "广州": "Guangzhou",
     "深圳": "Shenzhen", "杭州": "Hangzhou", "成都": "Chengdu",
@@ -37,67 +36,58 @@ CITY_MAP = {
 
 
 def get_weather_data(city: str) -> Dict[str, Any]:
-    """从 wttr.in 获取天气数据（辅助函数）"""
+    """获取天气原始数据（辅助函数）"""
     city_en = CITY_MAP.get(city, city)
     url = f"https://wttr.in/{city_en}?format=j1"
-    headers = {"User-Agent": "Weather-MCP-Server/1.0"}
+    headers = {"User-Agent": "Weather-MCP-Stdio/1.0"}
     
     response = requests.get(url, headers=headers, timeout=10)
     response.raise_for_status()
-    data = response.json()
-    current = data["current_condition"][0]
-
+    current = response.json()["current_condition"][0]
+    
     return {
         "city": city,
         "temperature": float(current["temp_C"]),
         "feels_like": float(current["FeelsLikeC"]),
         "humidity": int(current["humidity"]),
         "condition": current["weatherDesc"][0]["value"],
-        "wind_speed": round(float(current["windspeedKmph"]) / 3.6, 1),  # 转换为 m/s
+        "wind_speed": round(float(current["windspeedKmph"]) / 3.6, 1),  # 转换为m/s
         "visibility": float(current["visibility"]),
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
 
-# 工具返回 dict 类型（FastMCP 自动处理 JSON 序列化）
-@app.tool(name="get_weather", description="获取指定城市的当前天气，参数为中文城市名")
+# 注册工具（绑定到app实例）
+@app.tool(name="get_weather", description="获取指定中文城市的当前天气")
 def get_weather(city: str) -> Dict[str, Any]:
     try:
-        weather_data = get_weather_data(city)
-        return weather_data  # 直接返回字典，由框架自动序列化
+        return get_weather_data(city)
     except Exception as e:
-        return {"error": str(e), "city": city}  # 异常信息也返回字典
+        return {"error": str(e), "city": city}
 
 
-@app.tool(name="list_supported_cities", description="列出所有支持查询的中文城市")
+@app.tool(name="list_supported_cities", description="列出所有支持的中文城市")
 def list_supported_cities() -> Dict[str, Any]:
     return {
         "cities": list(CITY_MAP.keys()),
-        "count": len(CITY_MAP),
-        "message": "支持以下城市的天气查询"
-    }  # 直接返回字典
+        "count": len(CITY_MAP)
+    }
 
 
-@app.tool(name="get_server_info", description="获取当前天气服务器的元数据信息")
+@app.tool(name="get_server_info", description="获取服务器元信息")
 def get_server_info() -> Dict[str, Any]:
     return {
-        "name": "Weather MCP Server",
+        "name": app.name,
+        "description": app.description,
         "version": "1.0.0",
-        "framework": "fastmcp",
-        "status": "running",
-        "dependencies": app.dependencies,  # 复用初始化时的依赖信息
-        "supported_functions": ["get_weather", "list_supported_cities", "get_server_info"]
-    }  # 直接返回字典
+        "mode": "stdio",  # 明确标注为Stdio模式
+        "dependencies": app.dependencies
+    }
 
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8081))
-    host = "0.0.0.0"
-
-    logging.info(f"🌤️  Starting Weather MCP Server (fastmcp)")
-    logging.info(f"🔌 SSE 路由: http://{host}:{port}/sse")
-    logging.info(f"📦 依赖信息: {app.dependencies}")
-    logging.info(f"📡 服务启动中...")
-
-    # 显式启用 SSE 传输模式
-    app.run(host=host, port=port, transport="sse")
+    logging.info(f"🌤️  Starting Weather MCP Server (Stdio模式)")
+    logging.info(f"📡  通过标准输入输出通信，无需网络端口")
+    
+    # Stdio模式默认启用，直接运行（无需host/port/transport参数）
+    app.run()
