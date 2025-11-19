@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "weather-mcp-server"
-version = "1.0.7"  # 升级版本号
+version = "1.0.8"  # 升级版本号
 description = "Real-time weather query MCP server"
 readme = "README.md"
 license = {text = "MIT"}
