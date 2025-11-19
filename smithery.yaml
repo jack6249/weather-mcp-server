@@ -1,7 +1,7 @@
 name: weather-mcp-server
 displayName: Weather MCP Server
 description: Real-time weather query MCP server based on HelloAgents framework
-version: 1.0.6
+version: 1.0.7
 author: jack6249
 homepage: https://github.com/jack6249/weather-mcp-server
 license: MIT
@@ -13,20 +13,19 @@ tags:
   - real-time
   - helloagents
   - wttr
-runtime: container
-build:
-  dockerfile: Dockerfile
-  dockerBuildPath: .
-# 关键修改：切换为 stdio 模式
-# 这避开了所有 HTTP 端口和路径匹配的问题
+# 关键修改：运行时从 container 切换为 python
+runtime: python
+# 移除 Docker 相关构建配置（无需构建镜像，直接运行 Python 脚本）
+# 保留 stdio 模式启动命令（核心通信方式）
 startCommand:
   type: stdio
   command: python
   args: ["server.py"]
+# 工具列表（与服务器实际提供的工具保持一致）
 tools:
   - name: get_weather
-    description: Get current weather for a city
+    description: Get current weather for a city (parameter: Chinese city name)
   - name: list_supported_cities
-    description: List all supported cities
+    description: List all supported cities (returns Chinese city names)
   - name: get_server_info
-    description: Get server information
+    description: Get metadata information of the weather server

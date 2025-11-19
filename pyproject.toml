@@ -4,16 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "weather-mcp-server"
-version = "1.0.6"
-description = "Real-time weather query MCP server based on HelloAgents framework"
+version = "1.0.7"  # 升级版本号
+description = "Real-time weather query MCP server"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "jack6249", email = "zhangshanqi123@163.com"}
 ]
 requires-python = ">=3.10"
+
+# -------------------------------------------------------
+# 关键修正：必须包含 fastmcp，移除 hello-agents
+# -------------------------------------------------------
 dependencies = [
-    "hello-agents>=0.2.2",
+    "fastmcp>=0.1.0",
     "requests>=2.31.0",
 ]
 
