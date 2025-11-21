@@ -79,7 +79,7 @@ def get_server_info() -> Dict[str, Any]:
     return {
         "name": app.name,
         "description": app.description,
-        "version": "1.0.23",  # 与pyproject.toml版本同步
+        "version": "1.0.24",  # 与pyproject.toml版本同步
         "mode": "stdio",
         "dependencies": app.dependencies
     }
